@@ -9,28 +9,63 @@ def check_homogeneity(M, N, x, y):
     """ Check if the differential equation is homogeneous and determine the degree. """
     t = sp.symbols('t')
     
-    # Substitute x and y with t*x and t*y
+    # Debug: Start of the function
+    # print("Start of check_homogeneity")
+
+    # Substitute x and y with t*x and t*y in M and N
+    # print("Substituting x and y with t*x and t*y...")
     M_t = M.subs({x: t * x, y: t * y})
     N_t = N.subs({x: t * x, y: t * y})
-    
+
+    # print("Substituted M_t:", M_t)
+    # print("Substituted N_t:", N_t)
+
     # Simplify the expressions
+    # print("Simplifying M_t and N_t...")
     M_t_simplified = sp.simplify(M_t)
     N_t_simplified = sp.simplify(N_t)
+
+    # print("Simplified M_t:", M_t_simplified)
+    # print("Simplified N_t:", N_t_simplified)
+
+    # Try using sp.degree for polynomial case
+    try:
+        # print("Attempting to calculate degree using sp.degree...")
+        degree_M = sp.degree(M_t_simplified, gen=t)
+        degree_N = sp.degree(N_t_simplified, gen=t)
+
+        # Check if degrees match
+        # print(f"Degree of M_t: {degree_M}")
+        # print(f"Degree of N_t: {degree_N}")
+
+        if degree_M == degree_N:
+            # print(f"Both degrees are equal, returning HOMOGENEOUS, DEGREE: {degree_M}")
+            return f"HOMOGENEOUS, DEGREE: {degree_M}"
+        else:
+            # print("Degrees are not equal, returning NOT HOMOGENEOUS")
+            return "NOT HOMOGENEOUS"
     
-    print("Simplified M_t:", M_t_simplified)
-    print("Simplified N_t:", N_t_simplified)
+    except Exception:
+        # print("sp.degree failed, falling back to logarithmic method for non-polynomial expressions")
+        pass
 
-    # Check scaling behavior using log to identify the degree of t
-    degree_M = sp.simplify(sp.log(M_t_simplified) / sp.log(t)).simplify()
-    degree_N = sp.simplify(sp.log(N_t_simplified) / sp.log(t)).simplify()
+    # Logarithmic method for non-polynomial cases
+    # print("Calculating degree using logarithmic scaling...")
+    degree_M = sp.simplify(sp.log(M_t_simplified / M) / sp.log(t))
+    degree_N = sp.simplify(sp.log(N_t_simplified / N) / sp.log(t))
 
-    print(f"Degree of M_t: {degree_M}")
-    print(f"Degree of N_t: {degree_N}")
-
-    # Check if the degrees match
+    # print(f"Degree of M_t (log method): {degree_M}")
+    # print(f"Degree of N_t (log method): {degree_N}")
+    
+    # Check if degrees are equal
     if degree_M == degree_N:
+        # print(f"Both degrees are equal, returning HOMOGENEOUS, DEGREE: {degree_M}")
         return f"HOMOGENEOUS, DEGREE: {degree_M}"
-    return "NOT HOMOGENEOUS"
+    else:
+        # print("Degrees are not equal, returning NOT HOMOGENEOUS")
+        return "NOT HOMOGENEOUS"
+
+
 
 
 
@@ -40,15 +75,15 @@ def check_exactness(M, N, x, y):
     M_y = sp.diff(M, y)
     N_x = sp.diff(N, x)
     
-    # Print the partial derivatives for debugging
-    print("Partial derivative of M with respect to y:", M_y)
-    print("Partial derivative of N with respect to x:", N_x)
+    # # print the partial derivatives for debugging
+    # print("Partial derivative of M with respect to y:", M_y)
+    # print("Partial derivative of N with respect to x:", N_x)
     
     # Simplify the difference between the two partial derivatives
     difference = sp.simplify(M_y - N_x)
     
-    # Print the simplified difference for debugging
-    print("Simplified difference (M_y - N_x):", difference)
+    # # print the simplified difference for debugging
+    # print("Simplified difference (M_y - N_x):", difference)
     
     # Return the result based on the comparison
     return "EXACT" if difference == 0 else "NOT EXACT"
@@ -71,7 +106,7 @@ def preprocess_input(expr):
     expr = re.sub(r'([0-9])\(', r'\1*(', expr)  # Add * between number and parenthesis
     expr = re.sub(r'([xy])\(', r'\1*(', expr)   # Add * between variable and parenthesis
     
-    print(expr)
+    # print(expr)
 
     return expr
 
@@ -95,44 +130,44 @@ def analyze_equation(equation_input):
     """ Analyze the input equation for homogeneity and exactness. """
     x, y = sp.symbols('x y')  # Define symbols for x and y
     try:
-        print("Valid 1: Parsing the equation")
+        # print("Valid 1: Parsing the equation")
         M_input, N_input = parse_input(equation_input)  # Parse input into M and N
-        print("Valid 2: Parsed successfully")
+        # print("Valid 2: Parsed successfully")
         
         # Debugging parsed inputs
-        print("Parsed M_input:", M_input)
-        print("Parsed N_input:", N_input)
+        # print("Parsed M_input:", M_input)
+        # print("Parsed N_input:", N_input)
         
         # Preprocess the inputs for implicit multiplication and exponentiation
         M_input = preprocess_input(M_input)
         N_input = preprocess_input(N_input)
-        print("Valid 3: Preprocessing complete")
+        # print("Valid 3: Preprocessing complete")
         
         # Debugging preprocessed inputs
-        print("Preprocessed M_input:", M_input)
-        print("Preprocessed N_input:", N_input)
+        # print("Preprocessed M_input:", M_input)
+        # print("Preprocessed N_input:", N_input)
         
         # Attempt to sympify the expressions
         try:
             M = sp.sympify(M_input)
             N = sp.sympify(N_input)
-            print("Valid 4: Sympification successful")
+            # print("Valid 4: Sympification successful")
         except Exception as e:
-            print(f"Error during sympify: {e}")
+            # print(f"Error during sympify: {e}")
             raise ValueError(f"Invalid input detected after preprocessing: {e}")
         
         # Debugging sympified expressions
-        print("Sympified M:", M)
-        print("Sympified N:", N)
+        # print("Sympified M:", M)
+        # print("Sympified N:", N)
         
         # Check for homogeneity and exactness
         exactness = check_exactness(M, N, x, y)
-        print("\n" * 2)  # Debugging separator
+        # print("\n" * 2)  # Debugging separator
         homogeneity = check_homogeneity(M, N, x, y)
         return f"{homogeneity} | {exactness}"
 
     except Exception as e:
-        print("Error:", e)
+        # print("Error:", e)
         return str(e)
 
 
